@@ -1,0 +1,40 @@
+{% include "stock_store/base.html" %}
+
+{% load static %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+    <body>
+        <br>
+
+        <div  class="container bg-withe shadow -md p-5 form-layout">
+            
+            <h3> Create your account </h3>
+            
+            <br>
+            <br>
+
+            <form method = "POST" autocomplete = "off">
+
+                {% csrf_token %}
+                
+                {{form.username| as_crispy_field}}
+
+                {{form.password1| as_crispy_field}}
+                
+                {{form.password2| as_crispy_field}}
+                
+                <br> <br>
+
+                <button type="submit" class="btn btn-secondary brn-lg w-100 btn-block p-2"> &nbsp; Create account </button>
+
+            </form>
+
+        </div>
+
+
+    </body>
+
+{% endblock %}

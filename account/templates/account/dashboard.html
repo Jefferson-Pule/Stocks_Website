@@ -1,0 +1,171 @@
+{% include "stock_store/base.html" with title='Dashboard' %}
+{% load extras %}
+{% load static %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+<br>
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-md-12 h-50">
+			<div class="row">
+				<div class="col-md-5">
+                    <div class="container" >
+
+                        <h3 id="My_Dashboard"> My Dashboard </h3>
+					    
+                        <div class="card text-center">
+                                 <!--Profile-->
+						        <div class="card-body ">
+                                    <div class="row">
+
+                                        <!--Stock Info-->
+                                        <div class="col-md-5" >
+                                             <br>
+                                            <!-- Symbol and KPIs -->
+                                            {% if user_subscriptions|index:-4 == "1" %}
+                                                <h1 id="slug" align="left" style="margin-left:10px;" >{{slug_symbol}} <span id="rotated" style="color:rgba(75, 192, 192, 1);">&#11164</span> </h1>
+                                            {% elif user_subscriptions|index:-4 == "0" %}
+                                                <h1 id="slug" align="left" style="margin-left:10px;" >{{slug_symbol}} <span style="">&#11166</span> </h1>
+                                            {% elif user_subscriptions|index:-4 == "-1" %}
+                                                <h1 align="left" style="margin-left:10px;" id="slug">{{slug_symbol}} <span id="rotated" style="color:rgb(255, 26, 104,1);">&#11166</span> </h1>
+                                            {% endif %}
+
+                                            <!-- Name and sector -->
+                                            <h4 id="name" align="left" style="margin-left:10px;">{{slug_name}}</h4>
+                                            <h4 id="name" align="left" style="margin-left:10px;">{{slug_market}}</h4>
+
+                                        </div>
+                                        
+                                        <!--Diversity Graph and Title-->
+                                        <div id="chart-wrapper" class="col-md-3">
+                                                    
+                                            <canvas id="diversity_chart"></canvas>
+
+                                        </div>
+
+                                        <div id="details" class="col-md-4">
+                                            
+                                            <ul><li id="diversity-title"> Diversity </li>        </ul>
+
+                                        </div>
+
+                                    </div>
+                                    
+                                    <br><br>
+
+                                    <!-- Table of Current Stock -->
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                                                           
+                                            <div class="table-responsive">
+                                           
+                                              <table class="table">
+
+                                                      <tbody>
+                                                        {% for d in slug_data %}
+                                                                <tr>
+                                                                  <th scope="row">Open</th>
+                                                                  <td>{{d.Open|index:-1|floatformat:4}}</td>
+                                                                  <th scope="row">Close</th>
+                                                                  <td>{{d.Close|index:-1|floatformat:4}}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                  <th scope="row">High</th>
+                                                                  <td>{{d.High|index:-1|floatformat:4}}</td>
+                                                                  <th scope="row">Low</th>
+                                                                  <td>{{d.Low|index:-1|floatformat:4}}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                  <th scope="row">Volume</th>
+                                                                  <td>{{d.Volume|index:-1}}</td>
+                                                                  <th scope="row">Adj Close</th>
+                                                                  <td>{{d.Adj_Close|index:-1|floatformat:4}}</td>
+                                                                </tr>
+
+ 
+                                                          {% endfor %}
+
+                                                     </tbody>
+                                                    
+                                              </table>
+
+                                            </div>
+                                        </div>
+                                        
+                                    </div>
+                                </div>
+                        </div>
+
+				    </div>
+
+			    </div>
+
+				<div class="col-md-7">
+                    <div class="container" >
+                        <div class="container">
+                            <ul class="nav justify-content-end">
+                                    <li class="nav-item">
+                                        <div class="form-check form-switch">
+                                          <input class="form-check-input" onclick="update()" type="checkbox" id="ma" >
+                                          <label class="form-check-label" for="Mov_avg">Moving Average</label>
+                                        </div>
+                                    </li>
+                                    <li class="nav-item">
+                                        <div class="form-check form-switch">
+                                          <input class="form-check-input" onclick="update()" type="checkbox" id="bb" >
+                                          <label class="form-check-label" for="BollingerBand">Bollinger Band</label>
+                                        </div>
+                                    </li>
+                            </ul>
+                        </div>
+                       <!-- Main chart -->
+					    <div class="card text-center">
+
+						        <div class="card-body ">
+                                        <canvas id="myChart"></canvas>
+                                        <canvas id="myChart2"></canvas>
+                               </div>
+
+						</div>
+
+					</div>
+				</div>
+		    </div>
+	  </div>
+
+        <!--Table with Stocks-->
+		<div class="row h-50">
+			<div class="col-md-12">
+				<div class="card">
+					<div class="card-body" >
+                        <div id="tabled" class="container h-100" >
+                            <div id="example-table">{% csrf_token %}</div>
+						</div>
+                    </div>
+				</div>
+			</div>
+		</div>
+
+    </div>
+
+    <!-- ----------------------------------------------------------------------------------------------------------- -->
+    <!-- Chart Script-->
+    <script id="charts_js" type="text/javascript" src="{% static 'js/charts.js' %}" defer> </script>
+    {{ slug_data|json_script}}
+
+    <!-- Table Script-->
+    <script id="table_js" type="text/javascript" src="{% static 'js/table.js' %}" defer> </script>
+    {{ user_subscriptions|json_script }}
+
+    <!-- Diversity Chart Script-->
+    <script id="diversity_js" type="text/javascript" src="{% static 'js/diversity_chart.js' %}" defer> </script>
+    {{ dc_data|json_script}}
+    <!-- ----------------------------------------------------------------------------------------------------------- -->
+</div>
+
+
+{% endblock %}
+
+
