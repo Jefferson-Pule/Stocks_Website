@@ -1,6 +1,6 @@
 var chartdata_d = JSON.parse(document.currentScript.nextElementSibling.textContent);
 
-console.log(chartdata_d)
+//console.log(chartdata_d)
 
 
 var d_data = chartdata_d.data;
@@ -70,7 +70,7 @@ const config_d = {
                 callbacks: {
                     label: (context) => {
                         const newLineArray = []
-                        console.log(context)
+                        //console.log(context)
                         const perce = Math.round(context.parsed / totalsum * 100).toFixed(0)
                         newLineArray.push(`${context.parsed} stocks in sector`)
                         return newLineArray
@@ -94,7 +94,7 @@ myChart_d.update();
 // Populate Legend
 
 const populateUl = () => {
-    console.log(data_d.labels)
+    //console.log(data_d.labels)
     data_d.labels.forEach((l, i) => {
         let li = document.createElement("li");
         li.innerHTML = `<span class='percentage' style='color:${data_d.datasets[0].borderColor[i]};'>${Math.round(data_d.datasets[0].data[i] / totalsum * 100).toFixed(0)}%</span> ${l} `;

@@ -18,7 +18,10 @@ from django.shortcuts import get_object_or_404
 
 from django.http import JsonResponse
 from django.core import serializers
+
+import os
 import json
+import environ
 
 from .bigquery import BigqueryClass
 
@@ -97,7 +100,14 @@ def user_logout(request):
 @login_required(login_url='my-login')
 def explore(request):
     # Values
-    key_location = r"D:\complex_math\AMATH454\Lectures\innate-mapper-378202-25fe21698801.json"
+    
+    LOCAL_ENV_PATH=os.environ.get("LOCAL_ENV_PATH", None)
+    env = environ.Env()
+
+    if LOCAL_ENV_PATH:               
+        env.read_env(LOCAL_ENV_PATH)
+
+    key_location = env("BIG_QUERY_LOCATION", default=r"/secret/Bigquery_key")
     n_total = 10
     n = 10
     # Big query for table
@@ -193,7 +203,13 @@ def dashboard(request, slug):
         return JsonResponse({'seconds': time()}, status = 200)
 
     # Values
-    key_location = r""
+    LOCAL_ENV_PATH=os.environ.get("LOCAL_ENV_PATH", None)
+    env = environ.Env()
+
+    if LOCAL_ENV_PATH:               
+        env.read_env(LOCAL_ENV_PATH)
+
+    key_location = env("BIG_QUERY_LOCATION", default=r"/secret/Bigquery_key")
     n_total = 365
     n = 10
 

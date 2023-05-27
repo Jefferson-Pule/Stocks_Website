@@ -23,8 +23,9 @@ class BigqueryClass:
 
     def query_from_bq(self, key_location, bq_query, data_frame=False):
         # Google related information
+
         SERVICE_ACCOUNT_JSON= key_location
-    
+        
         # Call the client
         client=bigquery.Client.from_service_account_json(SERVICE_ACCOUNT_JSON)
     

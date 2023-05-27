@@ -1,0 +1,136 @@
+# PREPARATION 
+
+
+## CREATE DEPENDENCIES ##
+
+# gcloud components update --version 418.0.0 # gcloud Beta Commands
+
+
+# CREATE A PROJECT 
+
+
+set PROJECT_ID=
+set NAME=stocks-website
+
+gcloud projects create %PROJECT_ID% --name=%NAME% --set-as-default  # Create project (waits until it is changed)
+
+# You may need to enable billing to your project or do it in the console
+
+gcloud beta billing projects link %PROJECT_ID% --billing-account [YOUR_BILLING_ACCOUNT]
+
+
+# ACTIVATE APIs (vpcaccess is only needed if you use a sql server instance)
+
+gcloud services enable run.googleapis.com sql-component.googleapis.com sqladmin.googleapis.com compute.googleapis.com cloudbuild.googleapis.com secretmanager.googleapis.com artifactregistry.googleapis.com vpcaccess.googleapis.com servicenetworking.googleapis.com billingbudgets.googleapis.com 
+
+
+# IF PROJECT_ID not set up
+
+gcloud config get-value core/project>tmp.txt
+set /p PROJECT_ID=<tmp.txt
+del tmp.txt
+
+set REGION=us-central1
+
+# Create a service account 
+
+gcloud iam service-accounts create cloudrun-serviceaccount
+
+gcloud iam service-accounts list --filter cloudrun-serviceaccount --format "value(email)">tmp.txt
+set /p SERVICE_ACCOUNT=<tmp.txt
+del tmp.txt
+
+# CREATE VPC connection HOST (NEEDED FOR SQL SERVICE)
+
+# CREATE AN ALLOCATED IP RANGE
+
+gcloud compute addresses create internal-connection --global --purpose=VPC_PEERING --addresses=192.168.0.0 --prefix-length=16 --description="Stocks Website Allocate IP range" --network=default
+ 
+# ESTABLISH A PRIVATE CONNECTION TO SERVICE 
+ 
+gcloud services vpc-peerings connect --service=servicenetworking.googleapis.com --ranges=internal-connection--network=default
+
+# CREATE A CONNECTOR FOR CLOUD RUN 
+gcloud compute networks vpc-access connectors create sql-server-connector --network default --region %REGION% --range 10.8.0.0/28
+
+# CREATE DATABASE
+
+set INSTANCE_NAME=
+
+set DJPASSWORD=
+
+# for non sql server use the flag --enable-google-private-path and adapt other options
+
+gcloud sql instances create %INSTANCE_NAME% --project %PROJECT_ID% --database-version SQLSERVER_2019_STANDARD --cpu 2 --memory 8 --region %REGION% --network=projects/%PROJECT_ID%/global/networks/default -assign-ip --root-password=%DJPASSWORD%
+
+gcloud sql databases create Stocks_Website_db --instance=%INSTANCE_NAME%
+
+gcloud sql instances list --filter=name:%INSTANCE_NAME% --format="value(PRIVATE_ADDRESS)">tmp.txt
+set /p HOST=<tmp.txt
+set DBUSER=sqlserver
+del tmp.txt
+
+# Give your service account cloudsql access
+
+gcloud projects add-iam-policy-binding %PROJECT_ID% --member serviceAccount:%SERVICE_ACCOUNT% --role roles/cloudsql.client
+
+# CREATE A BUCKET 
+
+echo HOST="%HOST%"> .env
+echo INSTANCE_NAME="%INSTANCE_NAME%">> .env
+echo DBUSER=%DBUSER%>> .env
+echo DJPASSWORD=%DJPASSWORD%>> .env
+echo PROJECT_ID="%PROJECT_ID%">> .env
+echo GS_BUCKET_NAME=%GS_BUCKET_NAME%>> .env
+echo REGION="%REGION%">>.env
+echo DBUG="TRUE">>.env
+echo BIG_QUERY_LOCATION="/secret/Bigquery_key">>.env
+
+# SAVE ANY KEYS IN SECRETS
+
+gcloud secrets create application_settings --data-file .env
+del .env
+gcloud secrets create Bigquery_key --data-file
+
+gcloud projects describe %PROJECT_ID% --format value(projectNumber)>>tmp.txt
+set /p PROJECTNUM=<tmp.txt
+del tmp.txt
+
+set CLOUDBUILD=%PROJECTNUM%@cloudbuild.gserviceaccount.com
+
+gcloud secrets add-iam-policy-binding application_settings --member serviceAccount:%SERVICE_ACCOUNT% --role roles/secretmanager.secretAccessor
+
+gcloud secrets add-iam-policy-binding Bigquery_key --member serviceAccount:%SERVICE_ACCOUNT% --role roles/secretmanager.secretAccessor
+
+gcloud secrets add-iam-policy-binding application_settings --member serviceAccount:%CLOUDBUILD% --role roles/secretmanager.secretAccessor
+
+gcloud secrets add-iam-policy-binding Bigquery_key --member serviceAccount:%CLOUDBUILD% --role roles/secretmanager.secretAccessor
+
+set BIG_QUERY_LOCATION=/secret/Bigquery_key
+
+gcloud projects add-iam-policy-binding %PROJECT_ID% --member serviceAccount:%CLOUDBUILD% --role roles/cloudsql.client
+
+# CREATE THE DOCKER IMAGE (GO TO YOUR FOLDER if you are not already there change the value of the name of the docker file before running I NEED TO IMPROVE THIS)
+
+gcloud builds submit --pack image=gcr.io/%PROJECT_ID%/myimage 
+
+# CREATE REPOSITORY FOR DOCKER FILES
+
+gcloud artifacts repositories create my-full-image --repository-format=Docker --location=us-central1 --description="Web Stocks Docker repository"
+
+gcloud builds submit --tag us-central1-docker.pkg.dev/%PROJECT_ID%/my-full-image/myfullimage
+
+gcloud builds submit --config migrate.yaml # RUN MIGRATIONS MISSING CREATING SUPER USER
+
+gcloud run deploy stocks-website --platform managed --region %REGION% --image %REGION%-docker.pkg.dev/%PROJECT_ID%/my-full-image/myfullimage:latest  --set-cloudsql-instances %PROJECT_ID%:%REGION%:%INSTANCE_NAME% --set-secrets APPLICATION_SETTINGS=application_settings:latest --set-secrets %BIG_QUERY_LOCATION%=Bigquery_key:latest --service-account %SERVICE_ACCOUNT% --allow-unauthenticated --vpc-connector sql-server-connector
+
+# SAVE THE NEW INFO TO ALLOW THE WEBSITE TO BE TRUSTED
+
+gcloud run services describe stocks-website --platform managed --region %REGION% --format value(status.url)>>tmp.txt
+set /p CLOUDRUN_SERVICE_URL=<tmp.txt
+del tmp.txt
+
+echo CLOUDRUN_SERVICE_URL=%CLOUDRUN_SERVICE_URL%>>temp_settings
+del temp_settings
+
+gcloud run services update stocks-website --platform managed --region %REGION% --image %REGION%-docker.pkg.dev/%PROJECT%/my-full-image/myfullimage:latest 

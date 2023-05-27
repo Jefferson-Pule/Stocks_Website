@@ -97,7 +97,7 @@ try:
         s_i=Stock.create(symbol=df.iloc[i]["symbol"],name=df.iloc[i]["name"],sector=Market_sector.objects.get(name=Sec[df.iloc[i]["sector"]]),active=df.iloc[i]["active"],slug=df.iloc[i]["slug"])
         s_i.save()
 
-except Exception as error:
+except:
     pass
 
 

@@ -10,8 +10,30 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
+import io
+from urllib.parse import urlparse
+import environ
+
 import os
 import posixpath
+
+
+# Load the settings from the environment variable
+env = environ.Env()
+env.read_env(io.StringIO(os.environ.get("APPLICATION_SETTINGS", None)))
+
+LOCAL_ENV_PATH=os.environ.get("LOCAL_ENV_PATH", None)
+if LOCAL_ENV_PATH:
+    env.read_env(LOCAL_ENV_PATH)
+
+
+# If defined, add service URL to Django security settings
+CLOUDRUN_SERVICE_URL = env("CLOUDRUN_SERVICE_URL", default=None)
+if CLOUDRUN_SERVICE_URL:
+    ALLOWED_HOSTS = [urlparse(CLOUDRUN_SERVICE_URL).netloc]
+    CSRF_TRUSTED_ORIGINS = [CLOUDRUN_SERVICE_URL]
+else:
+    ALLOWED_HOSTS = ["*"]
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -23,9 +45,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'e1cda883-453e-4eb9-98db-8c0ed394ffde'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
+DEBUG = env("DEBUG", default="TRUE")
 
 # Application references
 # https://docs.djangoproject.com/en/2.1/ref/settings/#std:setting-INSTALLED_APPS
@@ -85,22 +105,30 @@ TEMPLATES = [
 WSGI_APPLICATION = 'Stocks_Web.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
+
+HOST = env("HOST", default=None)
+
 DATABASES = {
     
     'default': {
         'ENGINE': 'mssql',
-        'HOST': '',
-        'PORT': '',
-        'NAME': '',
-        'USER': '',
-        'PASSWORD': '',
-
+        'HOST': HOST,
+        'NAME': 'Stocks_Website_db',
+        'USER': env("DBUSER"),
+        'PASSWORD': env("DJPASSWORD"),
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',
         },
     },
 
 }
+
+# Change database settings if using the Cloud SQL Auth Proxy
+if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
+    DATABASES["default"]["HOST"] = "127.0.0.1"
+    DATABASES["default"]["PORT"] = 5432
+
+print("#####", DATABASES["default"]["HOST"])
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
@@ -129,11 +157,19 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
+
+if not LOCAL_ENV_PATH:
+
+    GS_BUCKET_NAME = env("GS_BUCKET_NAME")
+    DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
+    STATICFILES_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
+    GS_DEFAULT_ACL = "publicRead"
+
 STATIC_URL = '/static/'
 
-STATICFILES_DIRS = (posixpath.join(*(BASE_DIR.split(os.path.sep) + ['static'])),)
+STATICFILES_DIRS = ['static']
 
-#STATIC_ROOT = posixpath.join(*(BASE_DIR.split(os.path.sep) + ['static']))
+STATIC_ROOT = "/static_root/"
 
 MEDIA_URL = '/media/'
 

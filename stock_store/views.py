@@ -4,7 +4,7 @@ from . models import Market_sector, Stock, Subscription
 # Create your views here.
 
 def stock_store(request):
-
+    
     if request.user.is_authenticated:
         subscriptions = Subscription.objects.filter(user=request.user)
 

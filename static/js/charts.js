@@ -2,7 +2,7 @@ Chart.defaults.font.family = "'FontAwesome', 'Helvetica', 'Helvetica Neue', 'Ari
 
 var chartdata = JSON.parse(document.currentScript.nextElementSibling.textContent);
 
-console.log("chart_data", chartdata);
+//console.log("chart_data", chartdata);
 
 // Create Dataset
 const dates = [];
@@ -844,7 +844,7 @@ function zoomBox(min, max) {
         let minChart1 = myChart.config.options.scales.x.min;
         let maxChart1 = myChart.config.options.scales.x.max;
 
-        console.log("min", minChart1)
+       // console.log("min", minChart1)
 
         if (minChart1 === undefined || minChart1 === -1) {
             minChart1 = dates[0];
@@ -893,8 +893,8 @@ function zoomBox(min, max) {
                 const dayTimestamp = new Date(timestamp).setHours(0, 0, 0, 0);
                 let scrollPoint = dates.indexOf(dayTimestamp);
 
-                console.log(dayTimestamp)
-                console.log(scrollPoint)
+                //console.log(dayTimestamp)
+                //console.log(scrollPoint)
 
                 if (dragDelta.offsetX > right && scrollPoint === -1) {
                     scrollPoint = dates.length - 1;

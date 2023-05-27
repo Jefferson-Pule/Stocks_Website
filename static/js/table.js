@@ -3,7 +3,7 @@
 const csrf = document.getElementsByName('csrfmiddlewaretoken')[0].value
 var tabledata = JSON.parse(document.currentScript.nextElementSibling.textContent);
 
-console.log("table", tabledata);
+//console.log("table", tabledata);
 
 
 if (typeof tabledata != 'string') {
@@ -29,7 +29,7 @@ var chartFormatter = function (cell, formatterParams, onRendered) {
     }
 
     if (formatterParams.type == 'line') {
-        console.log(values[values.length - 1])
+//        console.log(values[values.length - 1])
         color = values[values.length - 1]
         maxi = values[values.length - 2]
         mini = values[values.length - 3]
@@ -111,7 +111,19 @@ if (window.location.pathname[9] == "d") {
             { title: "Volume", field: "Volume" },
             //{ title: "Adj_Close", field: "Adj_Close", formatter: "money", formatterParams: {} },
             {
-                title: "Line Chart", field: "line", formatter: chartFormatter, formatterParams: { type: "line" },},
+                title: "Line Chart", field: "line", formatter: chartFormatter, formatterParams: { type: "line" }, sorter: function (a, b, aRow, bRow, column, dir, sorterParams) {
+                    //a, b - the two values being compared
+                    //aRow, bRow - the row components for the values being compared (useful if you need to access additional fields in the row data for the sort)
+                    //column - the column component for the column being sorted
+                    //dir - the direction of the sort ("asc" or "desc")
+                    //sorterParams - sorterParams object from column definition array
+                    a=aRow.getData()["line"][12]
+                    b=bRow.getData()["line"][12]
+
+                    return a - b; //you must return the difference between the two values
+                }
+
+            },
             {
                 title: "Subscribe", field: "User_subscribed", formatter: buttomFormatter, width: 135, minWidth: 135, align: "center", cellClick: function (e, cell) {
                     var symbol = cell.getRow().getCell('Symbol').getValue();
@@ -125,7 +137,7 @@ if (window.location.pathname[9] == "d") {
 
                     $.ajax({
                         type: 'POST',
-                        url: 'explore',
+                        url: '',
                         data: {
                             'csrfmiddlewaretoken': csrf,
                             'symbol': symbol,
@@ -185,7 +197,20 @@ if (window.location.pathname[9] == "d") {
             { title: "Low", field: "Low", formatter: "money", formatterParams: {} },
             { title: "Volume", field: "Volume" },
             //{ title: "Adj_Close", field: "Adj_Close", formatter: "money", formatterParams: {} },
-            { title: "Line Chart", field: "line", formatter: chartFormatter, formatterParams: { type: "line" } },
+            {
+                title: "Line Chart", field: "line", formatter: chartFormatter, formatterParams: { type: "line" }, sorter: function (a, b, aRow, bRow, column, dir, sorterParams) {
+                    //a, b - the two values being compared
+                    //aRow, bRow - the row components for the values being compared (useful if you need to access additional fields in the row data for the sort)
+                    //column - the column component for the column being sorted
+                    //dir - the direction of the sort ("asc" or "desc")
+                    //sorterParams - sorterParams object from column definition array
+                    a = aRow.getData()["line"][12]
+                    b = bRow.getData()["line"][12]
+
+                    return a - b; //you must return the difference between the two values
+                }
+
+            },
             {
                 title: "Subscribe", field: "User_subscribed", formatter: buttomFormatter, width: 135, minWidth: 135, align: "center", cellClick: function (e, cell) {
                     var symbol = cell.getRow().getCell('Symbol').getValue();

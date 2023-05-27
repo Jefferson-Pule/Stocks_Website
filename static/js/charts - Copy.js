@@ -2,7 +2,7 @@ Chart.defaults.font.family = "'FontAwesome', 'Helvetica', 'Helvetica Neue', 'Ari
 
 var chartdata = JSON.parse(document.currentScript.nextElementSibling.textContent);
 
-console.log("chart_data", chartdata);
+//console.log("chart_data", chartdata);
 
 // Create Dataset
 const dates = [];
