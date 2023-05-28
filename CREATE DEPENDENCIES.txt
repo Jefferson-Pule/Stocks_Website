@@ -1,22 +1,26 @@
-# PREPARATION 
-
-
 ## CREATE DEPENDENCIES ##
 
 # gcloud components update --version 418.0.0 # gcloud Beta Commands
 
 
 # CREATE A PROJECT 
-
+set /A suf=%RANDOM%*%RANDOM% 
+for /f "delims== tokens=1,2" %%G in (variables.txt) do (IF %%G==PROJECT_ID (set %%G=%%H-) ELSE (set %%G=%%H))
 
 set PROJECT_ID=
-set NAME=stocks-website
+set NAME=
+set REGION=
+set BILLING_ACCOUNT=
+set INSTANCE_NAME=
+set DJPASSWORD=
+set BIG_QUERY_KEY_LOCATION=
+set VPC-CONNECTOR-NAME=
 
 gcloud projects create %PROJECT_ID% --name=%NAME% --set-as-default  # Create project (waits until it is changed)
 
 # You may need to enable billing to your project or do it in the console
 
-gcloud beta billing projects link %PROJECT_ID% --billing-account [YOUR_BILLING_ACCOUNT]
+gcloud beta billing projects link %PROJECT_ID% --billing-account %BILLING_ACCOUNT%
 
 
 # ACTIVATE APIs (vpcaccess is only needed if you use a sql server instance)
@@ -29,8 +33,6 @@ gcloud services enable run.googleapis.com sql-component.googleapis.com sqladmin.
 gcloud config get-value core/project>tmp.txt
 set /p PROJECT_ID=<tmp.txt
 del tmp.txt
-
-set REGION=us-central1
 
 # Create a service account 
 
@@ -51,13 +53,9 @@ gcloud compute addresses create internal-connection --global --purpose=VPC_PEERI
 gcloud services vpc-peerings connect --service=servicenetworking.googleapis.com --ranges=internal-connection--network=default
 
 # CREATE A CONNECTOR FOR CLOUD RUN 
-gcloud compute networks vpc-access connectors create sql-server-connector --network default --region %REGION% --range 10.8.0.0/28
+gcloud compute networks vpc-access connectors create %VPC-CONNECTOR-NAME% --network default --region %REGION% --range 10.8.0.0/28
 
 # CREATE DATABASE
-
-set INSTANCE_NAME=
-
-set DJPASSWORD=
 
 # for non sql server use the flag --enable-google-private-path and adapt other options
 
@@ -83,7 +81,7 @@ echo DJPASSWORD=%DJPASSWORD%>> .env
 echo PROJECT_ID="%PROJECT_ID%">> .env
 echo GS_BUCKET_NAME=%GS_BUCKET_NAME%>> .env
 echo REGION="%REGION%">>.env
-echo DBUG="TRUE">>.env
+echo DBUG="%DBUG%">>.env
 echo BIG_QUERY_LOCATION="/secret/Bigquery_key">>.env
 
 # SAVE ANY KEYS IN SECRETS
@@ -106,8 +104,6 @@ gcloud secrets add-iam-policy-binding application_settings --member serviceAccou
 
 gcloud secrets add-iam-policy-binding Bigquery_key --member serviceAccount:%CLOUDBUILD% --role roles/secretmanager.secretAccessor
 
-set BIG_QUERY_LOCATION=/secret/Bigquery_key
-
 gcloud projects add-iam-policy-binding %PROJECT_ID% --member serviceAccount:%CLOUDBUILD% --role roles/cloudsql.client
 
 # CREATE THE DOCKER IMAGE (GO TO YOUR FOLDER if you are not already there change the value of the name of the docker file before running I NEED TO IMPROVE THIS)
@@ -116,13 +112,15 @@ gcloud builds submit --pack image=gcr.io/%PROJECT_ID%/myimage
 
 # CREATE REPOSITORY FOR DOCKER FILES
 
+FROM gcr.io/%PROJECT_ID%/myimage:latest > tmp | type docker_template\Dockerfile_temp >> tmp | (Echo YES|move tmp Dockerfile)
+
 gcloud artifacts repositories create my-full-image --repository-format=Docker --location=us-central1 --description="Web Stocks Docker repository"
 
 gcloud builds submit --tag us-central1-docker.pkg.dev/%PROJECT_ID%/my-full-image/myfullimage
 
 gcloud builds submit --config migrate.yaml # RUN MIGRATIONS MISSING CREATING SUPER USER
 
-gcloud run deploy stocks-website --platform managed --region %REGION% --image %REGION%-docker.pkg.dev/%PROJECT_ID%/my-full-image/myfullimage:latest  --set-cloudsql-instances %PROJECT_ID%:%REGION%:%INSTANCE_NAME% --set-secrets APPLICATION_SETTINGS=application_settings:latest --set-secrets %BIG_QUERY_LOCATION%=Bigquery_key:latest --service-account %SERVICE_ACCOUNT% --allow-unauthenticated --vpc-connector sql-server-connector
+gcloud run deploy stocks-website --platform managed --region %REGION% --image %REGION%-docker.pkg.dev/%PROJECT_ID%/my-full-image/myfullimage:latest  --set-cloudsql-instances %PROJECT_ID%:%REGION%:%INSTANCE_NAME% --set-secrets APPLICATION_SETTINGS=application_settings:latest --set-secrets %BIG_QUERY_LOCATION%=Bigquery_key:latest --service-account %SERVICE_ACCOUNT% --allow-unauthenticated --vpc-connector %VPC-CONNECTOR-NAME%
 
 # SAVE THE NEW INFO TO ALLOW THE WEBSITE TO BE TRUSTED
 
