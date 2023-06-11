@@ -16,7 +16,7 @@ from django.db.models import Count, Q
 
 from django.shortcuts import get_object_or_404
 
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from django.core import serializers
 
 import os
@@ -28,6 +28,7 @@ from .bigquery import BigqueryClass
 from random import randint
 from time import time
 
+
 # Create your views here.
 
 # Register
@@ -36,7 +37,7 @@ def register(request):
     form = CreateUserForm()
 
     if request.method == 'POST':
-        
+
         form = CreateUserForm(request.POST)
 
         if form.is_valid():
@@ -180,10 +181,11 @@ def dashboard(request, slug):
     slug_name= Stk_objc.values('name')[0]['name']
     #print(Stk_objc.values('sector_id')[0]['sector_id'])
     slug_market= Market_sector.objects.get(id = Stk_objc.values('sector_id')[0]['sector_id']) 
+
     # Ajax response
 
     if request.method == 'POST':
-
+        
         symbol_to_update = request.POST.get('symbol')
         action_to_do = int(request.POST.get('action'))
 
@@ -201,6 +203,9 @@ def dashboard(request, slug):
            # print(" subscription created ", request.user.username, symbol_to_update)
 
         return JsonResponse({'seconds': time()}, status = 200)
+
+    # Stream current Price
+
 
     # Values
     LOCAL_ENV_PATH=os.environ.get("LOCAL_ENV_PATH", None)

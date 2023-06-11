@@ -15,6 +15,19 @@
     font-family: sans-serif;
 }
 
+#current_price {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+#change {
+    font-size: 20px;
+}
+
+#per_change {
+    font-size: 20px;
+}
+
 #My_Dashboard {
     color: DeepSkyBlue;
     font-weight: bold;
@@ -25,10 +38,19 @@
 }
 
 #name {
-    color: lightgrey;
-    font-size: 20px;
+    color: #b0b9c1;
+    font-size: 15px;
+}
+#current_info {
+ display: inline-block;
 }
 
+#date_retrieved {
+    padding-left: 15px;
+    text-align: left;
+    color: #b0b9c1;
+    font-size: 10px;
+}
 
 #rotated {
     padding-bottom: 10px;

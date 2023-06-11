@@ -1,8 +1,6 @@
 """
 Django settings for Stocks_Web project.
 
-Based on 'django-admin startproject' using Django 2.1.2.
-
 For more information on this file, see
 https://docs.djangoproject.com/en/2.1/topics/settings/
 
@@ -50,6 +48,8 @@ DEBUG = env("DEBUG", default="TRUE")
 # Application references
 # https://docs.djangoproject.com/en/2.1/ref/settings/#std:setting-INSTALLED_APPS
 INSTALLED_APPS = [
+    'daphne', # Channels for streaming data
+
     'stock_store', #Django App
     
     'account', #Django App
@@ -103,6 +103,9 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'Stocks_Web.wsgi.application'
+
+ASGI_APPLICATION = 'Stocks_Web.asgi.application'
+
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 

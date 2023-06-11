@@ -7,10 +7,13 @@ Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Stocks_Web", "Stocks_Web.py
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Activate|Any CPU = Activate|Any CPU
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1AD66DFF-36E9-4B78-9203-6106B0D7C820}.Activate|Any CPU.ActiveCfg = Activate|Any CPU
+		{1AD66DFF-36E9-4B78-9203-6106B0D7C820}.Activate|Any CPU.Build.0 = Activate|Any CPU
 		{1AD66DFF-36E9-4B78-9203-6106B0D7C820}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1AD66DFF-36E9-4B78-9203-6106B0D7C820}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1AD66DFF-36E9-4B78-9203-6106B0D7C820}.Release|Any CPU.ActiveCfg = Release|Any CPU

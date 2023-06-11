@@ -22,7 +22,6 @@
 
                                         <!--Stock Info-->
                                         <div class="col-md-5" >
-                                             <br>
                                             <!-- Symbol and KPIs -->
                                             {% if user_subscriptions|index:-4 == "1" %}
                                                 <h1 id="slug" align="left" style="margin-left:10px;" >{{slug_symbol}} <span id="rotated" style="color:rgba(75, 192, 192, 1);">&#11164</span> </h1>
@@ -35,12 +34,19 @@
                                             <!-- Name and sector -->
                                             <h4 id="name" align="left" style="margin-left:10px;">{{slug_name}}</h4>
                                             <h4 id="name" align="left" style="margin-left:10px;">{{slug_market}}</h4>
-
+                                             <!-- Current price -->
+                                            <div id="current_info">
+                                            <h4><a id="current_price"></a>
+                                                <a id="change"></a>
+                                                <a id="per_change"></a> 
+                                            </h4>
+                                            </div>
+                                            <h5 id="date_retrieved"></h5>
                                         </div>
                                         
                                         <!--Diversity Graph and Title-->
                                         <div id="chart-wrapper" class="col-md-3">
-                                                    
+
                                             <canvas id="diversity_chart"></canvas>
 
                                         </div>
@@ -53,8 +59,6 @@
 
                                     </div>
                                     
-                                    <br><br>
-
                                     <!-- Table of Current Stock -->
                                     <div class="row">
                                         <div class="col-md-12">
@@ -162,6 +166,45 @@
     <!-- Diversity Chart Script-->
     <script id="diversity_js" type="text/javascript" src="{% static 'js/diversity_chart.js' %}" defer> </script>
     {{ dc_data|json_script}}
+
+    <!-- Update Script-->
+    <script id="current_price" type="text/javascript">
+        let url = `ws://${window.location.host}/ws/socket-server/`
+
+        const priceSocket = new WebSocket(url)
+
+        priceSocket.onmessage = function (e) {
+            let data = JSON.parse(e.data)
+            console.log('Data:', data)
+            if (data.type === 'curr_prices') {
+                let current_price = document.getElementById('current_price');
+                let change = document.getElementById('change');
+                let per_change = document.getElementById('per_change');
+                let date_retrieved = document.getElementById('date_retrieved');
+
+                if (data.market_change[0] === "+") {
+                    change.style.color = "#4bc0c0"
+                    per_change.style.color = "#4bc0c0"
+                }
+                else if (data.market_change[0] === "-") {
+                    change.style.color = "#ff6600"
+                    per_change.style.color = "#ff6600"
+                }
+                else {
+                    change.style.color = "#ff6600"
+                    per_change.style.color = "#ff6600"
+                }
+                ;
+
+                current_price.innerHTML = data.current_price;
+                change.innerHTML = data.market_change;
+                per_change.innerHTML = "(" + data.market_change_percent + "%)";
+                date_retrieved.innerHTML = "At: "+data.date
+            }
+        }
+
+    </script>
+
     <!-- ----------------------------------------------------------------------------------------------------------- -->
 </div>
 
