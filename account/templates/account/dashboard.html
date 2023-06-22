@@ -168,10 +168,17 @@
     {{ dc_data|json_script}}
 
     <!-- Update Script-->
-    <script id="current_price" type="text/javascript">
-        let url = `ws://${window.location.host}/ws/socket-server/`
+    <script id="current_price" data-slug="{{slug_symbol}}" type="text/javascript">
+        var slug = document.currentScript.dataset.slug;
+        var ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
+        let url = ws_scheme+`://${window.location.host}/ws/socket-server/`
 
         const priceSocket = new WebSocket(url)
+
+        priceSocket.addEventListener("open", (event) => {
+            priceSocket.send(slug);
+
+        });
 
         priceSocket.onmessage = function (e) {
             let data = JSON.parse(e.data)
@@ -198,12 +205,13 @@
 
                 current_price.innerHTML = data.current_price;
                 change.innerHTML = data.market_change;
-                per_change.innerHTML = "(" + data.market_change_percent + "%)";
+                per_change.innerHTML = "(" + data.market_change_percent + ")";
                 date_retrieved.innerHTML = "At: "+data.date
             }
         }
 
     </script>
+
 
     <!-- ----------------------------------------------------------------------------------------------------------- -->
 </div>

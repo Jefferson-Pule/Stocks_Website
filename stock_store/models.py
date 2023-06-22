@@ -105,11 +105,13 @@ try:
         df=pd.read_csv(SQL_DATA_FILE, names=["id", "symbol", "name", "active", "slug","image" ,"sector"])
 
         for i in range(len(df["id"])):
+
             s_i=Stock.create(symbol=df.iloc[i]["symbol"],name=df.iloc[i]["name"],sector=Market_sector.objects.get(name=Sec[df.iloc[i]["sector"]]),active=df.iloc[i]["active"],slug=df.iloc[i]["slug"])
             s_i.save()
 
-except:
+except: 
     pass
+    
 
 
 class Subscription(models.Model):
