@@ -42,7 +42,10 @@ Enter the folder **dependencies** and run the following command
 ```bash
 Deploy_project.cmd
 ```
-At the end of the script, you will have a cloud-run application that hosts a website to analyze stocks.
+At the end of the script, you will have a cloud-run application that hosts a website to analyze stocks. This is the end result
+
+![Dashboard](local_data/readme-images/Dashboard-extra.png)
+![Explore](local_data/readme-images/Explore-extra.png)
 
 ## Dependencies
 

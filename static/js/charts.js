@@ -242,7 +242,7 @@ const customTooltip = {
                 ctx.restore();
 
                 // Line 3 Text Value
-                const valueText = 'Value: ';
+                const valueText = 'Volume: ';
                 const valueTextWidth = ctx.measureText(valueText).width;
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'middle';
