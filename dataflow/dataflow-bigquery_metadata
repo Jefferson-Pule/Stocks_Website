@@ -1,0 +1,12 @@
+{"name": "templates_dataflow-bigquery1",
+ "parameters": [
+   { "name": "input",
+     "helpText": "Input file that contains stocks markets order",
+     "label": "Input Cloud Storage file"
+   },
+   {"name": "table_id",
+    "helpText":"The BQ Table id to output in format project_id.dataset.table_name",
+    "label": "BQ Table Id"
+   }
+ ]
+}

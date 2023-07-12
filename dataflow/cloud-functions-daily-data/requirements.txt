@@ -1,0 +1,4 @@
+yfinance
+datetime
+google-api-python-client
+google-cloud-storage

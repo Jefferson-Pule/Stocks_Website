@@ -1,11 +1,11 @@
-PROJECT_ID=my-stocks-website
+PROJECT_ID=
 NAME=stocks-website
-REGION=us-central1
 BILLING_ACCOUNT=
 DJPASSWORD=
+REGION=us-central1
+DFLOW_TOPIC=Data_flow
 DBUG=TRUE
 VPC-CONNECTOR-NAME=sql-server-connector
-BIG_QUERY_KEY_LOCATION=
 INSTANCE_NAME=cloudsqlfordj
-DATA_BASE_VERSION=SQLSERVER_2019_STANDARD
-DJ-FOLDER=
+SQL_DATA_FILE=../local_data/SP500_stocks_info.csv
+

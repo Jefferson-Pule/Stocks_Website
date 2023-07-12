@@ -4,6 +4,9 @@ from datetime import date
 
 from google.cloud import bigquery
 
+import environ
+import os
+import io
 
 class BigqueryClass:
     def __init__(self, n_total, n):
@@ -22,13 +25,23 @@ class BigqueryClass:
         return subs_set
 
     def query_from_bq(self, key_location, bq_query, data_frame=False):
-        # Google related information
+        ## Google related information
 
-        SERVICE_ACCOUNT_JSON= key_location
+        #SERVICE_ACCOUNT_JSON= key_location
         
-        # Call the client
-        client=bigquery.Client.from_service_account_json(SERVICE_ACCOUNT_JSON)
-    
+        ## Call the client
+        #client=bigquery.Client.from_service_account_json(SERVICE_ACCOUNT_JSON)
+        env = environ.Env()
+        env.read_env(io.StringIO(os.environ.get("APPLICATION_SETTINGS", None)))
+
+        LOCAL_ENV_PATH=os.environ.get("LOCAL_ENV_PATH", None)
+        if LOCAL_ENV_PATH:
+            env.read_env(LOCAL_ENV_PATH)
+
+        PROJECT_ID=env("PROJECT_ID", default=None)
+
+        client=bigquery.Client(project=PROJECT_ID)
+
         # Query
         query_job = client.query(bq_query)                                                    
         
@@ -40,7 +53,19 @@ class BigqueryClass:
         return result
 
     def create_queries(self, subs_set, n_total, n, symbol_id):
-    
+        # Load the settings from the environment variable
+        env = environ.Env()
+        env.read_env(io.StringIO(os.environ.get("APPLICATION_SETTINGS", None)))
+
+        LOCAL_ENV_PATH=os.environ.get("LOCAL_ENV_PATH", None)
+        
+        if LOCAL_ENV_PATH:
+            env.read_env(LOCAL_ENV_PATH)
+
+        PROJECT_ID=env("PROJECT_ID", default=None)
+
+        client=bigquery.Client(project=PROJECT_ID)
+        print(client.project, "###################")
         query_for_stock_graph=f"""
         SELECT *, Moving_average+2*Std AS UpBoll, Moving_average-2*Std AS DownBoll FROM
             (SELECT *, avg(data.close) OVER(ORDER BY data.Date Asc ROWS BETWEEN 20 PRECEDING AND CURRENT ROW ) as Moving_average,  
@@ -48,7 +73,7 @@ class BigqueryClass:
             
             FROM UNNEST((
 
-                    SELECT INFO FROM `innate-mapper-378202.Stocks_dataset.Stocks_info` 
+                    SELECT INFO FROM `{client.project}.Stocks_dataset.Stocks_info` 
                     WHERE Symbol_id= {symbol_id}
             ))
                    
@@ -62,7 +87,7 @@ class BigqueryClass:
                     SELECT Symbol, Name,I.Date AS Date, I.Open AS Open, I.High AS High, I.Low AS Low, 
                     I.Close AS Close, I.Adj_Close AS Adj_Close, I.Volume AS Volume, 
                     row_number() over (partition by Symbol_ID order by Symbol, I.Date DESC) As Date_rank 
-                    From `innate-mapper-378202.Stocks_dataset.Stocks_info` CROSS JOIN UNNEST(Info) AS I 
+                    From `{client.project}.Stocks_dataset.Stocks_info` CROSS JOIN UNNEST(Info) AS I 
                     WHERE Symbol_ID IN {subs_set} 
 
                 ) WHERE Date_rank<={n}

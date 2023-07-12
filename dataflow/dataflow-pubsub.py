@@ -22,7 +22,7 @@ class Get_Current_Price(DoFn):
         response = requests.get(url, headers=headers)
         soup = BeautifulSoup(response.text, "html.parser")
 
-        tz = timezone('EST')
+        tz = timezone('America/Toronto')
         now=datetime.datetime.now(tz)
         dt_string = now.strftime("%B %d %I:%M%p EDT")
 
@@ -46,33 +46,33 @@ class Obtain_prices(PTransform):
         )
     
 class Get_Output_Topic(DoFn):
-    def __init__(self, input_topic):
-        self.input_topic = input_topic
+    def __init__(self, output_topic):
+        self.output_topic = output_topic
 
     def process(self, element):
         logging.info("element inside WriteToPubSub %s",element)
-        base=self.input_topic.rsplit('/',1)[0]+"/"
-        output_topic=base+element.rsplit(':', 1)[1].rsplit('\"')[1]
+        symbol=element.rsplit(':', 1)[1].rsplit('\"')[1]
+        output_topic=self.output_topic
 
         publisher = pubsub_v1.PublisherClient()
         message=bytes("{}".format(element), 'utf-8')
-        future = publisher.publish(output_topic, message)     
-        logging.info("Publishing to %s %s",output_topic, future.result())
+        future = publisher.publish(output_topic, message, symbol=symbol)     
+        logging.info("Publishing to %s %s %s",output_topic, future.result(), symbol)
 
         yield element
 
 class Obtain_Output_Topic(PTransform):
-    def __init__(self, input_topic):
-        self.input_topic = input_topic
+    def __init__(self, output_topic):
+        self.output_topic = output_topic
     
     def expand(self, pcoll):
         return (
             pcoll 
             # Get stocks prices
-            | 'Output topic' >> ParDo(Get_Output_Topic(self.input_topic))
+            | 'Write to PubSub' >> ParDo(Get_Output_Topic(self.output_topic))
         )
 
-def run(input_topic,output_path,pipeline_args=None):
+def run(input_topic, output_topic,pipeline_args=None):
     pipeline_options = PipelineOptions(
         pipeline_args, streaming=True, save_main_session=True
     )
@@ -82,7 +82,7 @@ def run(input_topic,output_path,pipeline_args=None):
 
             | "Read from Pub/Sub" >> io.ReadFromPubSub(topic=input_topic)
             | "Obtain Prices" >> Obtain_prices()
-            | "Write to Pub/Sub" >>  Obtain_Output_Topic(input_topic)
+            | "Write to Pub/Sub" >>  Obtain_Output_Topic(output_topic)
         )
         
 if __name__ == "__main__":
@@ -95,10 +95,16 @@ if __name__ == "__main__":
         help="The Cloud Pub/Sub topic to read from."
         '"projects/<PROJECT_ID>/topics/<TOPIC_ID>".',
     )
+    parser.add_argument(
+        "--output_topic",
+        help="The Cloud Pub/Sub topic to publidh data."
+        '"projects/<PROJECT_ID>/topics/<TOPIC_ID>".',
+    )
 
     known_args, pipeline_args = parser.parse_known_args()
 
     run(
         known_args.input_topic,
+        known_args.output_topic, 
         pipeline_args,
     )

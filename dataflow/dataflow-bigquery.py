@@ -8,10 +8,16 @@ import yfinance as yf
 import datetime
 
 from google.cloud import bigquery
-from apache_beam import DoFn, io, ParDo, Pipeline, PTransform
+
+from apache_beam import DoFn, io, ParDo, Pipeline, PTransform, CombineGlobally
 from apache_beam.io.gcp.gcsio import GcsIO
 from apache_beam.options.pipeline_options import PipelineOptions
 
+class UserOptions(PipelineOptions):
+    @classmethod
+    def _add_argparse_args(cls, parser):
+        parser.add_value_provider_argument("--input")
+        parser.add_value_provider_argument("--output")
 
 class Get_Yahoo_Data(DoFn):
 
@@ -46,13 +52,19 @@ class Get_Data(PTransform):
         )
 
 class Write_BQ(DoFn):
+
     """
        Writes to BQ
 
     """
     def process(self, element):
         rows=[json.loads(element)]
+
         client = bigquery.Client()
+        dataset_id ="{}.Stocks_dataset".format(client.project)
+
+        table_id= dataset_id+".Stocks_info"
+
         table_obj = client.get_table(table_id)
         errors = client.insert_rows_json(table_obj, rows)
 
@@ -67,16 +79,36 @@ class Write_to_BQ(PTransform):
             | 'Write to BQ' >> ParDo(Write_BQ())
         )
 
-def run(input_file,table_id, pipeline_args=None):
+class Write_to_GCS(PTransform):
+    def __init__(self, output):
+        self.output=output
+
+    def combine_data(self, Data):
+        start_date=datetime.date.today()-datetime.timedelta(days=365)
+        end_date = datetime.date.today()- datetime.timedelta(days = 3)
+        Dataset = yf.download("AAPL", start = start_date, end = end_date).reset_index()
+        return Dataset["Date"].max().isoformat()[:10]
+
+    def expand(self, pcoll):
+        return (
+            pcoll 
+            # Get stocks prices
+            | 'Get Date' >> CombineGlobally(self.combine_data)
+            | 'Write to Bucket' >> io.textio.WriteToText(self.output, num_shards=1, file_name_suffix=".txt")
+        )
+
+def run(pipeline_args=None):
     pipeline_options = PipelineOptions(
         pipeline_args, streaming=False, save_main_session=True
     )
+    user_options = pipeline_options.view_as(UserOptions)
     with Pipeline(options=pipeline_options) as pipeline:
         (
             pipeline
-            | "Get Symbol Names" >> io.textio.ReadFromText(input_file)
-            | "get yahoo data" >> Get_Data()
-            | "write to bigquery" >> Write_to_BQ()
+            | "Get Symbol Names" >> io.textio.ReadFromText(user_options.input)
+            | "Get Yahoo Data" >> Get_Data()
+            | "Write To BigQuery" >> Write_to_BQ()
+            | "Write to GCS" >> Write_to_GCS(user_options.output)
         )
         
 if __name__ == "__main__":
@@ -84,22 +116,5 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument(
-        "--input",
-        dest='input',
-        help="Input that contains stocks markets order"
-    )
-
-    parser.add_argument(
-        "--table_id",
-        help="The BQ Table id to output in format project_id.dataset.table_name"
-    )
-
-    known_args, pipeline_args = parser.parse_known_args()
-    print(pipeline_args)
-
-    run(
-        known_args.input,
-        known_args.table_id,
-        pipeline_args 
-    )
+    other, pipeline_args = parser.parse_known_args()
+    run( pipeline_args )

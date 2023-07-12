@@ -1,4 +1,4 @@
-FROM gcr.io/my-stocks-website-35035935/myimage:latest  
+FROM gcr.io/my-stocks-website-25351839/myimage:latest  
 # THIS LINE SHOULD HAPPEN BEFORE THE DOCKER FILE IS RUN "FROM gcr.io/%PROJECT%/myimage:latest"
 
 USER root

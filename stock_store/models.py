@@ -3,6 +3,7 @@ import pandas as pd
 from django.contrib.auth.models import User
 import environ
 import os
+import io
 
 # Create your models here.
 class Market_sector(models.Model):
@@ -91,16 +92,21 @@ class Stock(models.Model):
         return stock
 
 try:
+    env = environ.Env()
+    env.read_env(io.StringIO(os.environ.get("APPLICATION_SETTINGS", None)))
     LOCAL_ENV_PATH=os.environ.get("LOCAL_ENV_PATH", None)
-
     if LOCAL_ENV_PATH:
-
-        env = environ.Env()        
         env.read_env(LOCAL_ENV_PATH)
+
+    FIRST_MIGRATE=(env("FIRST_MIGRATE", None)=="True")
+
+    if FIRST_MIGRATE:
 
         Sec={1:'E', 2:'M', 3:'I', 4:'U', 5:'H', 6:'F',7:'R',8:'CS',9:'CD',10:'IT',11:'C',12:'Unk'}
 
         SQL_DATA_FILE=env("SQL_DATA_FILE",None)
+        
+        print(SQL_DATA_FILE)
 
         df=pd.read_csv(SQL_DATA_FILE, names=["id", "symbol", "name", "active", "slug","image" ,"sector"])
 
@@ -109,8 +115,8 @@ try:
             s_i=Stock.create(symbol=df.iloc[i]["symbol"],name=df.iloc[i]["name"],sector=Market_sector.objects.get(name=Sec[df.iloc[i]["sector"]]),active=df.iloc[i]["active"],slug=df.iloc[i]["slug"])
             s_i.save()
 
-except: 
-    pass
+except Exception as e:
+    print(e)
     
 
 
