@@ -6,13 +6,13 @@ The website streams current Stocks information of S&P500 companies and presents 
 
 ## Requirements
 
-Note: Creating some dependencies in Google Cloud will incur a cost to your billing account. 
+**Note**: Creating some dependencies in Google Cloud will incur a cost to your billing account. 
 
-The project requires you to have a Google Cloud Platform account, an active Google Cloud billing account and the permissions necessary to link a new project to this account.
+The project requires you to have a **Google Cloud Platform account**, an active **Google Cloud billing account** and the permissions necessary to link a new project to this account.
 
-To create dependencies the project uses the google cloud CLI to create all dependencies, please install it following [these](https://cloud.google.com/sdk/docs/install) instructions.
+To create dependencies the project uses the **google cloud CLI** to create all dependencies, please install it following [these](https://cloud.google.com/sdk/docs/install) instructions.
 
-Also install the following extra components, in the Google CLI 
+Also **install** the following extra components, in the Google CLI 
 
 ```bash
 gcloud components install gsutil
@@ -23,7 +23,7 @@ gcloud components install gcloud-crc32c
 
 ## Usage
 
-Before running the script you need to update the file variables.txt locally with your information. 
+Before running the script you need to **update** the file **variables.txt** locally with your information. 
 
 ```
 PROJECT_ID=<A Unique Project ID>
@@ -37,14 +37,16 @@ VPC-CONNECTOR-NAME=sql-server-connector
 INSTANCE_NAME=cloudsqlfordj
 SQL_DATA_FILE=../local_data/SP500_stocks_info.csv
 ```
-
-Enter the folder dependencies and run the following command
+Enter the folder **dependencies** and run the following command
 
 ```bash
 Deploy_project.cmd
 ```
+At the end of the script, you will have a cloud-run application that hosts a website to analyze stocks.
+
+## Dependencies
+
 This script will create a new project with name PROJECT_ID and name NAME that contains:
-```
 * 1 GCS bucket called PROJECT_ID-media to store static files
 * 1 GCS bucket called PROJECT_ID-dataflow to store dataflow related files
 * 4 Pub/Sub topics to trigger Dataflow jobs and stream data
@@ -56,10 +58,10 @@ This script will create a new project with name PROJECT_ID and name NAME that co
 * 1 streaming DFLOW template inside PROJECT_ID-dataflow to stream stocks data.
 * 1 migration job to migrate data to the SQL Server instance and to migrate static files to GCS 
 * The appropriate service accounts and permissions to run the application
-```
+
 It will also deploy inside the new project:
-```
+
 * 2 cloud functions one to trigger the dataflow job that updates the BigQuery Table daily and one to trigger the dataflow job to stream data. 
 * 1 cloud scheduler job to trigger a cloud function to update BigQuery daily.  
 * 1 cloud run application called stocks-website with image name myfullimage saved in artifact. 
-```
+
