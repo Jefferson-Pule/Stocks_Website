@@ -52,7 +52,6 @@ At the end of the script, you will have a cloud-run application that hosts a web
 After running the script you get the following architecture
 
 ![Explore](local_data/readme-images/Dependencies.png)
-
 You will create a new project with name PROJECT_ID and name NAME that contains:
 * 1 GCS bucket called PROJECT_ID-media to store static files
 * 1 GCS bucket called PROJECT_ID-dataflow to store dataflow related files
