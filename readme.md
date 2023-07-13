@@ -45,11 +45,15 @@ Deploy_project.cmd
 At the end of the script, you will have a cloud-run application that hosts a website to analyze stocks. This is the end result
 
 ![Dashboard](local_data/readme-images/Dashboard-extra.png)
+
 ![Explore](local_data/readme-images/Explore-extra.png)
 
 ## Dependencies
+After running the script you get the following architecture
 
-This script will create a new project with name PROJECT_ID and name NAME that contains:
+![Explore](local_data/readme-images/Dependencies.png)
+
+You will create a new project with name PROJECT_ID and name NAME that contains:
 * 1 GCS bucket called PROJECT_ID-media to store static files
 * 1 GCS bucket called PROJECT_ID-dataflow to store dataflow related files
 * 4 Pub/Sub topics to trigger Dataflow jobs and stream data
@@ -65,6 +69,7 @@ This script will create a new project with name PROJECT_ID and name NAME that co
 It will also deploy inside the new project:
 
 * 2 cloud functions one to trigger the dataflow job that updates the BigQuery Table daily and one to trigger the dataflow job to stream data. 
-* 1 cloud scheduler job to trigger a cloud function to update BigQuery daily.  
+* 1 cloud scheduler job to trigger a cloud function to update BigQuery daily. 
+* 1 cloud scheduler job to trigger a cloud function to stream stocks symbols to Pub/Sub which sends them to Dataflow.  
 * 1 cloud run application called stocks-website with image name myfullimage saved in artifact. 
 
